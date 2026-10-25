@@ -355,11 +355,17 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 2.3 * 1024 ** 2, // 2.3MB
         },
         manifest: {
-          short_name: "Excalidraw",
-          name: "Excalidraw",
+          short_name: "Zippy",
+          name: "Zippy | Ideas move faster together",
           description:
-            "Excalidraw is a whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them.",
+            "A simple, playful whiteboard for sketching ideas and thinking visually together.",
           icons: [
+            {
+              src: "favicon.svg",
+              sizes: "any",
+              type: "image/svg+xml",
+              purpose: "any",
+            },
             {
               src: "android-chrome-192x192.png",
               sizes: "192x192",
@@ -382,10 +388,10 @@ export default defineConfig(({ mode }) => {
             },
           ],
           start_url: "/",
-          id: "excalidraw",
+          id: "zippy",
           display: "standalone",
-          theme_color: "#121212",
-          background_color: "#ffffff",
+          theme_color: "#f5f6fa",
+          background_color: "#f5f6fa",
           file_handlers: [
             {
               action: "/",
