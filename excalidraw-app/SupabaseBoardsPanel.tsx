@@ -366,6 +366,36 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
     }
   };
 
+  const handleRenameBoard = async (board: BoardData) => {
+    const nextTitle = window.prompt("Rename board", board.title);
+    if (nextTitle === null) {
+      return;
+    }
+    const cleanTitle = nextTitle.trim();
+    if (!cleanTitle) {
+      setMessage("A board needs a name.");
+      return;
+    }
+    setBusy(true);
+    setMessage("");
+    try {
+      await saveBoard(board.id, { title: cleanTitle });
+      setBoards((current) =>
+        current.map((item) =>
+          item.id === board.id ? { ...item, title: cleanTitle } : item,
+        ),
+      );
+      if (boardId === board.id) {
+        setTitle(cleanTitle);
+      }
+      setMessage("Board renamed.");
+    } catch (error) {
+      setMessage(friendlyError(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setBusy(true);
     setMessage("");
@@ -675,6 +705,16 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
                               disabled={busy || !api}
                             >
                               Open board ↗
+                            </button>
+                            <button
+                              type="button"
+                              style={{ ...styles.secondary, padding: "10px 12px" }}
+                              onClick={() => handleRenameBoard(board)}
+                              disabled={busy}
+                              aria-label={`Rename ${board.title}`}
+                              title="Rename board"
+                            >
+                              ✎
                             </button>
                             <button
                               type="button"
