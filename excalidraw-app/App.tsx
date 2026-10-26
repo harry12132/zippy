@@ -91,6 +91,7 @@ import { AppFooter } from "./components/AppFooter";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
 import { TopErrorBoundary } from "./components/TopErrorBoundary";
+import { SupabaseBoardsPanel } from "./SupabaseBoardsPanel";
 
 import {
   exportToBackend,
@@ -1085,6 +1086,7 @@ const ExcalidrawWrapper = () => {
           />
         )}
       </Excalidraw>
+      <SupabaseBoardsPanel api={excalidrawAPI} />
     </div>
   );
 };
