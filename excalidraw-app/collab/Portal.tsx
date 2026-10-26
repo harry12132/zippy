@@ -14,17 +14,22 @@ import type {
 import { WS_EVENTS, FILE_UPLOAD_TIMEOUT, WS_SUBTYPES } from "../app_constants";
 import { isSyncableElement } from "../data";
 
-import type {
-  SocketUpdateData,
-  SocketUpdateDataSource,
-  SyncableExcalidrawElement,
-} from "../data";
+import type { SocketUpdateData, SocketUpdateDataSource, SyncableExcalidrawElement } from "../data";
 import type { TCollabClass } from "./Collab";
-import type { Socket } from "socket.io-client";
+import type { SupabaseSocket } from "./SupabaseSocket";
+
+export type AnySocket = {
+  id?: string;
+  on: (event: string, cb: (...args: any[]) => void) => any;
+  once: (event: string, cb: (...args: any[]) => void) => any;
+  off: (event: string, cb?: (...args: any[]) => void) => any;
+  emit: (event: string, ...args: any[]) => any;
+  close: () => void;
+};
 
 class Portal {
   collab: TCollabClass;
-  socket: Socket | null = null;
+  socket: AnySocket | null = null;
   socketInitialized: boolean = false; // we don't want the socket to emit any updates until it is fully initialized
   roomId: string | null = null;
   roomKey: string | null = null;
@@ -34,7 +39,7 @@ class Portal {
     this.collab = collab;
   }
 
-  open(socket: Socket, id: string, key: string) {
+  open(socket: AnySocket, id: string, key: string) {
     this.socket = socket;
     this.roomId = id;
     this.roomKey = key;

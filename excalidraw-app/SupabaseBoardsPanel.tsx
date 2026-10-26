@@ -2,8 +2,8 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
 } from "react";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
@@ -20,151 +20,10 @@ import {
   type BoardData,
 } from "./data/supabase";
 
+import "./zippy-dashboard.scss";
+
 type Props = {
   api: ExcalidrawImperativeAPI | null;
-};
-
-const styles: Record<string, CSSProperties> = {
-  launcher: {
-    position: "fixed",
-    right: 20,
-    bottom: 20,
-    zIndex: 1000,
-    border: "1px solid #202020",
-    borderRadius: 999,
-    padding: "12px 18px",
-    background: "#171717",
-    color: "#fff",
-    boxShadow: "0 8px 28px rgba(0,0,0,.18)",
-    fontFamily: "inherit",
-    fontSize: 13,
-    fontWeight: 650,
-    cursor: "pointer",
-  },
-  backdrop: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 2000,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-    background: "rgba(17, 18, 20, .48)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-    color: "#191919",
-  },
-  shell: {
-    width: "min(100%, 1000px)",
-    maxHeight: "min(820px, calc(100dvh - 40px))",
-    minHeight: "min(560px, calc(100dvh - 40px))",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    border: "1px solid rgba(0,0,0,.08)",
-    borderRadius: 22,
-    background: "#fbfbfa",
-    boxShadow: "0 28px 100px rgba(0,0,0,.25)",
-  },
-  topbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-    padding: "18px 22px",
-    borderBottom: "1px solid #e9e9e7",
-    background: "rgba(255,255,255,.88)",
-  },
-  brand: { display: "flex", alignItems: "center", gap: 10, fontWeight: 750, letterSpacing: "-.04em", fontSize: 19 },
-  brandMark: {
-    width: 30,
-    height: 30,
-    display: "grid",
-    placeItems: "center",
-    borderRadius: 10,
-    background: "#181818",
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: 800,
-  },
-  close: {
-    width: 36,
-    height: 36,
-    border: "1px solid #e5e5e3",
-    borderRadius: 11,
-    background: "#fff",
-    color: "#555",
-    fontSize: 20,
-    cursor: "pointer",
-  },
-  content: { overflowY: "auto", flex: 1, padding: "clamp(20px, 4vw, 42px)" },
-  eyebrow: { margin: "0 0 10px", color: "#74746f", fontSize: 11, fontWeight: 750, letterSpacing: ".13em", textTransform: "uppercase" },
-  heading: { margin: 0, color: "#171717", fontSize: "clamp(28px, 4vw, 40px)", lineHeight: 1.08, letterSpacing: "-.055em", fontWeight: 750 },
-  subheading: { margin: "12px 0 0", maxWidth: 520, color: "#777771", fontSize: 14, lineHeight: 1.65 },
-  field: {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: "12px 13px",
-    border: "1px solid #dededb",
-    borderRadius: 11,
-    background: "#fff",
-    color: "#202020",
-    font: "inherit",
-    fontSize: 14,
-    outlineColor: "#777",
-  },
-  primary: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    border: "1px solid #171717",
-    borderRadius: 11,
-    padding: "12px 15px",
-    background: "#171717",
-    color: "#fff",
-    font: "inherit",
-    fontSize: 13,
-    fontWeight: 650,
-    cursor: "pointer",
-  },
-  secondary: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    border: "1px solid #e0e0dd",
-    borderRadius: 11,
-    padding: "11px 13px",
-    background: "#fff",
-    color: "#282828",
-    font: "inherit",
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  quiet: {
-    border: 0,
-    padding: "8px 4px",
-    background: "transparent",
-    color: "#62625d",
-    font: "inherit",
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  card: {
-    minWidth: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: 14,
-    padding: 17,
-    border: "1px solid #e8e8e5",
-    borderRadius: 15,
-    background: "#fff",
-    boxShadow: "0 2px 6px rgba(0,0,0,.015)",
-  },
-  muted: { color: "#85857e", fontSize: 12 },
 };
 
 const friendlyError = (error: unknown): string =>
@@ -172,15 +31,30 @@ const friendlyError = (error: unknown): string =>
 
 const formatDate = (date: string): string => {
   const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) {
-    return "Date unavailable";
-  }
-  return new Intl.DateTimeFormat(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(parsed);
+  if (Number.isNaN(parsed.getTime())) return "—";
+  const now = new Date();
+  const diffMs = now.getTime() - parsed.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(parsed);
 };
+
+// Zippy wordmark SVG logo
+const ZippyLogo = () => (
+  <svg className="zp-logo-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <rect width="32" height="32" rx="9" fill="#4169ff"/>
+    <path d="M8 11h16L9 21h15" stroke="white" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Spinner component
+const Spinner = () => (
+  <svg className="zp-spinner" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="42" strokeDashoffset="12"/>
+  </svg>
+);
 
 export const SupabaseBoardsPanel = ({ api }: Props) => {
   const [open, setOpen] = useState(false);
@@ -196,7 +70,9 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
   const [title, setTitle] = useState("Untitled board");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; type: "info" | "error" | "success" } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const refreshBoards = useCallback(async () => {
     const result = await listMyBoards();
@@ -228,39 +104,108 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (!userEmail) {
+    if (!userEmail) return;
+    refreshBoards().catch((error) => setMessage({ text: friendlyError(error), type: "error" }));
+  }, [userEmail, refreshBoards]);
+
+  // Real-time board sync via Supabase Realtime
+  useEffect(() => {
+    if (!userEmail || !boardId || !api) return;
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch {
       return;
     }
-    refreshBoards().catch((error) => setMessage(friendlyError(error)));
-  }, [userEmail, refreshBoards]);
+
+    const channel = supabase
+      .channel(`board:${boardId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "boards",
+          filter: `id=eq.${boardId}`,
+        },
+        (payload) => {
+          const updated = payload.new as BoardData;
+          if (updated && updated.elements) {
+            api.updateScene({
+              elements: updated.elements as ExcalidrawElement[],
+              appState: updated.app_state as unknown as AppState,
+            });
+            if (updated.title) {
+              setTitle(updated.title);
+            }
+            refreshBoards().catch(() => {});
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userEmail, boardId, api, refreshBoards]);
+
+  // Instant Auto-Save on change + periodic backup when board is open and user is logged in
+  useEffect(() => {
+    if (!userEmail || !boardId || !api) return;
+
+    let timeoutId: any = null;
+    const saveCurrentBoard = async () => {
+      try {
+        setSaving(true);
+        const elements = api.getSceneElements() as readonly ExcalidrawElement[];
+        const appState = JSON.parse(JSON.stringify(api.getAppState())) as Record<string, unknown>;
+        await saveBoard(boardId, { title, elements: elements as unknown[], app_state: appState });
+      } catch (e) {
+        console.error("Auto-save error:", e);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    // Listen to custom canvas-changed event for instant debounced auto-save
+    const handleCanvasChange = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(saveCurrentBoard, 600);
+    };
+
+    window.addEventListener("zippy:canvas-change", handleCanvasChange);
+
+    const interval = setInterval(saveCurrentBoard, 8000);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+      window.removeEventListener("zippy:canvas-change", handleCanvasChange);
+    };
+  }, [userEmail, boardId, api, title]);
 
   const filteredBoards = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) {
-      return boards;
-    }
+    if (!query) return boards;
     return boards.filter((board) => board.title.toLowerCase().includes(query));
   }, [boards, search]);
 
   const handleAuth = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const supabase = getSupabaseClient();
       const { data, error } = isSignUp
         ? await supabase.auth.signUp({ email: email.trim(), password })
         : await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       if (isSignUp && !data.session) {
-        setMessage("Your account is created. Check your email to confirm it, then sign in.");
+        setMessage({ text: "Account created! Check your email to confirm, then sign in.", type: "info" });
       } else {
-        setMessage(isSignUp ? "Your Zippy account is ready." : "Welcome back.");
+        setMessage({ text: isSignUp ? "Welcome to Zippy! Your account is ready." : "Welcome back.", type: "success" });
       }
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
@@ -268,30 +213,20 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
 
   const handleSave = async () => {
     if (!api) {
-      setMessage("The drawing editor is still loading. Try again in a moment.");
+      setMessage({ text: "The canvas is still loading. Try again in a moment.", type: "error" });
       return;
     }
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const elements = api.getSceneElements() as readonly ExcalidrawElement[];
-      const appState = JSON.parse(
-        JSON.stringify(api.getAppState()),
-      ) as Record<string, unknown>;
+      const appState = JSON.parse(JSON.stringify(api.getAppState())) as Record<string, unknown>;
       const cleanTitle = title.trim() || "Untitled board";
 
       if (boardId) {
-        await saveBoard(boardId, {
-          title: cleanTitle,
-          elements: elements as unknown[],
-          app_state: appState,
-        });
+        await saveBoard(boardId, { title: cleanTitle, elements: elements as unknown[], app_state: appState });
       } else {
-        const board = await createBoard(
-          cleanTitle,
-          elements as unknown[],
-          appState,
-        );
+        const board = await createBoard(cleanTitle, elements as unknown[], appState);
         setBoardId(board.id);
         const url = new URL(window.location.href);
         url.searchParams.set("board", board.id);
@@ -299,9 +234,9 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
       }
 
       await refreshBoards();
-      setMessage("Saved. Your latest changes are in the cloud.");
+      setMessage({ text: "Saved to Zippy Cloud ✓", type: "success" });
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
@@ -309,11 +244,11 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
 
   const handleOpenBoard = async (id: string) => {
     if (!api) {
-      setMessage("The drawing editor is still loading. Try again in a moment.");
+      setMessage({ text: "Canvas is loading. Try again in a moment.", type: "error" });
       return;
     }
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const board = await loadBoard(id);
       api.updateScene({
@@ -326,9 +261,9 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
       url.searchParams.set("board", board.id);
       window.history.replaceState({}, "", url);
       setOpen(false);
-      setMessage("");
+      setMessage(null);
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
@@ -342,25 +277,21 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
     url.searchParams.delete("board");
     window.history.replaceState({}, "", url);
     setOpen(false);
-    setMessage("");
+    setMessage(null);
   };
 
   const handleDeleteBoard = async (board: BoardData) => {
-    const confirmed = window.confirm(`Delete “${board.title}”? This cannot be undone.`);
-    if (!confirmed) {
-      return;
-    }
+    const confirmed = window.confirm(`Delete "${board.title}"? This cannot be undone.`);
+    if (!confirmed) return;
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       await deleteBoard(board.id);
       setBoards((current) => current.filter((item) => item.id !== board.id));
-      if (boardId === board.id) {
-        setBoardId(null);
-      }
-      setMessage(`“${board.title}” deleted.`);
+      if (boardId === board.id) setBoardId(null);
+      setMessage({ text: `"${board.title}" deleted.`, type: "info" });
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
@@ -368,29 +299,23 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
 
   const handleRenameBoard = async (board: BoardData) => {
     const nextTitle = window.prompt("Rename board", board.title);
-    if (nextTitle === null) {
-      return;
-    }
+    if (nextTitle === null) return;
     const cleanTitle = nextTitle.trim();
     if (!cleanTitle) {
-      setMessage("A board needs a name.");
+      setMessage({ text: "A board needs a name.", type: "error" });
       return;
     }
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       await saveBoard(board.id, { title: cleanTitle });
       setBoards((current) =>
-        current.map((item) =>
-          item.id === board.id ? { ...item, title: cleanTitle } : item,
-        ),
+        current.map((item) => (item.id === board.id ? { ...item, title: cleanTitle } : item)),
       );
-      if (boardId === board.id) {
-        setTitle(cleanTitle);
-      }
-      setMessage("Board renamed.");
+      if (boardId === board.id) setTitle(cleanTitle);
+      setMessage({ text: "Board renamed.", type: "success" });
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
@@ -398,333 +323,308 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
 
   const handleSignOut = async () => {
     setBusy(true);
-    setMessage("");
+    setMessage(null);
     try {
       const { error } = await getSupabaseClient().auth.signOut();
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       setIsSignUp(false);
       setPassword("");
-      setMessage("You have signed out.");
+      setMessage({ text: "You've signed out.", type: "info" });
     } catch (error) {
-      setMessage(friendlyError(error));
+      setMessage({ text: friendlyError(error), type: "error" });
     } finally {
       setBusy(false);
     }
   };
 
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open && !busy) setOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, busy]);
+
   return (
     <>
+      {/* Launcher — top left pill button */}
       <button
         type="button"
-        style={styles.launcher}
-        onClick={() => {
-          setMessage("");
-          setOpen(true);
-        }}
+        className="zp-launcher"
+        onClick={() => { setMessage(null); setOpen(true); }}
         aria-haspopup="dialog"
+        aria-label="Open Zippy dashboard"
+        title="Zippy boards"
       >
-        <span aria-hidden="true" style={{ marginRight: 8 }}>▦</span>
-        {userEmail ? "My boards" : "Sign in"}
+        <ZippyLogo />
+        <span className="zp-launcher-label">
+          {userEmail ? (boardId ? title.slice(0, 20) || "My boards" : "My boards") : "Sign in"}
+        </span>
+        {userEmail && boardId && (
+          <span className="zp-launcher-badge" title="Board saved">✓</span>
+        )}
       </button>
 
+      {/* Save shortcut button (shown when logged in + board active) */}
+      {userEmail && (
+        <button
+          type="button"
+          className={`zp-save-btn${busy ? " zp-save-btn--busy" : ""}`}
+          onClick={handleSave}
+          disabled={busy}
+          title="Save board to Zippy Cloud"
+          aria-label="Save to Zippy Cloud"
+        >
+          {busy ? <Spinner /> : (
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" width="14" height="14">
+              <path d="M2 14V10.5L8 4l6 6.5V14H2Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path d="M5.5 14v-4.5h5V14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+          )}
+          <span>{busy ? "Saving…" : "Save"}</span>
+        </button>
+      )}
+
+      {/* Backdrop + panel */}
       {open && (
         <div
-          style={styles.backdrop}
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !busy) {
-              setOpen(false);
-            }
-          }}
+          className="zp-backdrop"
+          onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) setOpen(false); }}
+          role="presentation"
         >
           <section
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={userEmail ? "Your Zippy boards" : "Sign in to Zippy"}
-            style={styles.shell}
+            className="zp-panel"
           >
-            <header style={styles.topbar}>
-              <div style={styles.brand}>
-                <span style={styles.brandMark}>z</span>
-                <span>zippy</span>
-                <span style={{ ...styles.muted, fontWeight: 500, marginLeft: 2 }}>cloud</span>
+            {/* Panel header */}
+            <header className="zp-panel-header">
+              <div className="zp-panel-brand">
+                <ZippyLogo />
+                <span className="zp-panel-brand-name">Zippy</span>
+                <span className="zp-panel-brand-tag">Cloud</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="zp-panel-header-right">
                 {userEmail && (
-                  <span
-                    title={userEmail}
-                    style={{ ...styles.muted, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                  >
-                    {userEmail}
-                  </span>
+                  <span className="zp-user-email" title={userEmail}>{userEmail}</span>
                 )}
                 <button
                   type="button"
-                  style={styles.close}
+                  className="zp-close-btn"
                   onClick={() => setOpen(false)}
-                  aria-label="Close cloud boards"
+                  aria-label="Close dashboard"
                 >
-                  ×
+                  <svg viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+                    <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+                  </svg>
                 </button>
               </div>
             </header>
 
-            <div style={styles.content}>
+            {/* Panel body */}
+            <div className="zp-panel-body">
               {!configured ? (
-                <div style={{ maxWidth: 520, margin: "5vh auto" }}>
-                  <p style={styles.eyebrow}>Cloud workspace</p>
-                  <h1 style={styles.heading}>Your ideas, saved.</h1>
-                  <p style={styles.subheading}>
-                    Zippy Cloud needs its Supabase connection configured before you can sign in.
-                    Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to
-                    excalidraw-app/.env.local, then restart the dev server.
+                /* Not configured state */
+                <div className="zp-state-container">
+                  <div className="zp-state-icon">⚙️</div>
+                  <h1 className="zp-state-title">Setup required</h1>
+                  <p className="zp-state-desc">
+                    Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to{" "}
+                    <code>excalidraw-app/.env.local</code>, then restart the dev server.
                   </p>
                 </div>
               ) : !userEmail ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-                    gap: "clamp(28px, 5vw, 64px)",
-                    alignItems: "center",
-                    maxWidth: 820,
-                    minHeight: 390,
-                    margin: "0 auto",
-                  }}
-                >
-                  <div>
-                    <p style={styles.eyebrow}>A little space for big ideas</p>
-                    <h1 style={styles.heading}>
-                      Think it.
-                      <br />
-                      Sketch it.
-                      <br />
+                /* Auth form */
+                <div className="zp-auth-layout">
+                  <div className="zp-auth-hero">
+                    <p className="zp-eyebrow">Your creative space</p>
+                    <h1 className="zp-hero-title">
+                      Think it.<br />
+                      Sketch it.<br />
                       Keep it.
                     </h1>
-                    <p style={styles.subheading}>
-                      Sign in to keep your boards together and pick up where you left off,
-                      on any device.
+                    <p className="zp-hero-desc">
+                      Sign in to save your boards to the cloud and pick up right where you left off, on any device.
                     </p>
-                    <div style={{ display: "flex", gap: 18, marginTop: 28, color: "#777771", fontSize: 12 }}>
-                      <span>↗ Cloud saves</span>
-                      <span>◫ Your board library</span>
+                    <div className="zp-auth-features">
+                      <span className="zp-feature-pill">☁ Cloud saves</span>
+                      <span className="zp-feature-pill">◫ Board library</span>
+                      <span className="zp-feature-pill">⚡ Fast sync</span>
                     </div>
                   </div>
 
-                  <form
-                    onSubmit={handleAuth}
-                    style={{
-                      display: "grid",
-                      gap: 12,
-                      padding: "clamp(20px, 3vw, 30px)",
-                      border: "1px solid #e8e8e5",
-                      borderRadius: 18,
-                      background: "#fff",
-                      boxShadow: "0 8px 32px rgba(0,0,0,.035)",
-                    }}
-                  >
-                    <div style={{ marginBottom: 8 }}>
-                      <h2 style={{ margin: 0, fontSize: 21, letterSpacing: "-.04em" }}>
-                        {isSignUp ? "Create your account" : "Welcome back"}
+                  <form className="zp-auth-form" onSubmit={handleAuth}>
+                    <div className="zp-form-heading">
+                      <h2 className="zp-form-title">
+                        {isSignUp ? "Create account" : "Welcome back"}
                       </h2>
-                      <p style={{ margin: "7px 0 0", color: "#777771", fontSize: 13, lineHeight: 1.5 }}>
-                        {isSignUp ? "Start building your board library." : "Sign in to open your saved boards."}
+                      <p className="zp-form-subtitle">
+                        {isSignUp
+                          ? "Start building your board library."
+                          : "Sign in to open your saved boards."}
                       </p>
                     </div>
-                    <label style={{ display: "grid", gap: 7, fontSize: 12, fontWeight: 650 }}>
-                      Email
+
+                    <div className="zp-field-group">
+                      <label className="zp-field-label" htmlFor="zp-email">Email</label>
                       <input
-                        style={styles.field}
+                        id="zp-email"
+                        className="zp-field-input"
                         type="email"
                         autoComplete="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
-                    </label>
-                    <label style={{ display: "grid", gap: 7, fontSize: 12, fontWeight: 650 }}>
-                      Password
+                    </div>
+
+                    <div className="zp-field-group">
+                      <label className="zp-field-label" htmlFor="zp-password">Password</label>
                       <input
-                        style={styles.field}
+                        id="zp-password"
+                        className="zp-field-input"
                         type="password"
                         autoComplete={isSignUp ? "new-password" : "current-password"}
                         placeholder={isSignUp ? "At least 6 characters" : "Your password"}
                         value={password}
-                        onChange={(event) => setPassword(event.target.value)}
+                        onChange={(e) => setPassword(e.target.value)}
                         minLength={6}
                         required
                       />
-                    </label>
-                    <button type="submit" style={{ ...styles.primary, width: "100%", marginTop: 3 }} disabled={busy}>
-                      {busy ? "Please wait…" : isSignUp ? "Create account  ↗" : "Sign in  ↗"}
+                    </div>
+
+                    <button type="submit" className="zp-btn-primary zp-btn-full" disabled={busy}>
+                      {busy ? <><Spinner /> Please wait…</> : (isSignUp ? "Create account →" : "Sign in →")}
                     </button>
+
                     <button
                       type="button"
-                      style={styles.quiet}
-                      onClick={() => {
-                        setIsSignUp((value) => !value);
-                        setMessage("");
-                      }}
+                      className="zp-btn-ghost"
+                      onClick={() => { setIsSignUp((v) => !v); setMessage(null); }}
                     >
                       {isSignUp ? "Already have an account? Sign in" : "New to Zippy? Create an account"}
                     </button>
-                    <p style={{ margin: "2px 0 0", color: "#999991", fontSize: 11, lineHeight: 1.5 }}>
-                      Your boards are private to your account.
-                    </p>
+
+                    <p className="zp-form-privacy">🔒 Your boards are private to your account.</p>
                   </form>
                 </div>
               ) : (
+                /* Boards dashboard */
                 <>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      alignItems: "end",
-                      justifyContent: "space-between",
-                      gap: 18,
-                      marginBottom: 28,
-                    }}
-                  >
+                  <div className="zp-dashboard-header">
                     <div>
-                      <p style={styles.eyebrow}>Your workspace</p>
-                      <h1 style={styles.heading}>Your boards.</h1>
-                      <p style={styles.subheading}>
-                        Every idea in one place. Open a board to keep going, or start with a blank canvas.
+                      <p className="zp-eyebrow">Your workspace</p>
+                      <h1 className="zp-page-title">Your boards</h1>
+                      <p className="zp-page-desc">
+                        Every idea in one place. Open a board to keep going, or start fresh.
                       </p>
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                      <button type="button" style={styles.secondary} onClick={handleSignOut} disabled={busy}>
+                    <div className="zp-dashboard-actions">
+                      <button type="button" className="zp-btn-secondary" onClick={handleSignOut} disabled={busy}>
                         Sign out
                       </button>
-                      <button type="button" style={styles.primary} onClick={handleNewBoard} disabled={busy || !api}>
+                      <button type="button" className="zp-btn-primary" onClick={handleNewBoard} disabled={busy || !api}>
                         + New board
                       </button>
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      marginBottom: 18,
-                    }}
-                  >
-                    <div style={{ fontSize: 13, color: "#666660" }}>
-                      <strong style={{ color: "#202020" }}>{boards.length}</strong>{" "}
-                      {boards.length === 1 ? "saved board" : "saved boards"}
+                  <div className="zp-boards-toolbar">
+                    <div className="zp-board-count">
+                      <strong>{boards.length}</strong>{" "}
+                      {boards.length === 1 ? "board" : "boards"}
                     </div>
-                    <input
-                      style={{ ...styles.field, width: "min(100%, 290px)" }}
-                      type="search"
-                      aria-label="Search boards"
-                      placeholder="Search your boards…"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
+                    <div className="zp-search-wrap">
+                      <svg className="zp-search-icon" viewBox="0 0 16 16" fill="none" width="14" height="14" aria-hidden="true">
+                        <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.5"/>
+                        <path d="M10 10l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <input
+                        className="zp-search-input"
+                        type="search"
+                        aria-label="Search boards"
+                        placeholder="Search boards…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {boards.length === 0 ? (
-                    <div
-                      style={{
-                        padding: "clamp(30px, 6vw, 60px) 20px",
-                        border: "1px dashed #d9d9d5",
-                        borderRadius: 17,
-                        textAlign: "center",
-                        background: "#fff",
-                      }}
-                    >
-                      <div style={{ fontSize: 28, marginBottom: 12, color: "#777771" }}>＋</div>
-                      <h2 style={{ margin: 0, fontSize: 19, letterSpacing: "-.03em" }}>A clean canvas awaits.</h2>
-                      <p style={{ ...styles.subheading, margin: "8px auto 20px" }}>
-                        Save your first drawing to see it here next time.
-                      </p>
-                      <button type="button" style={styles.primary} onClick={handleNewBoard} disabled={busy || !api}>
+                    <div className="zp-empty-state">
+                      <div className="zp-empty-icon">
+                        <svg viewBox="0 0 64 64" fill="none" width="64" height="64" aria-hidden="true">
+                          <rect x="8" y="14" width="48" height="36" rx="6" fill="#eef1ff" stroke="#4169ff" strokeWidth="2"/>
+                          <path d="M22 32h20M22 38h12" stroke="#4169ff" strokeWidth="2" strokeLinecap="round"/>
+                          <circle cx="48" cy="48" r="10" fill="#4169ff"/>
+                          <path d="M48 44v8M44 48h8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <h2 className="zp-empty-title">A clean canvas awaits</h2>
+                      <p className="zp-empty-desc">Save your first drawing to see it here next time.</p>
+                      <button type="button" className="zp-btn-primary" onClick={handleNewBoard} disabled={busy || !api}>
                         Create your first board
                       </button>
                     </div>
                   ) : filteredBoards.length === 0 ? (
-                    <div style={{ padding: 35, textAlign: "center", color: "#777771", fontSize: 14 }}>
-                      No boards match “{search}”.
+                    <div className="zp-no-results">
+                      No boards match "<strong>{search}</strong>"
                     </div>
                   ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 245px), 1fr))",
-                        gap: 13,
-                      }}
-                    >
+                    <div className="zp-boards-grid">
                       {filteredBoards.map((board) => (
-                        <article key={board.id} style={styles.card}>
-                          <div
-                            style={{
-                              height: 94,
-                              display: "grid",
-                              placeItems: "center",
-                              overflow: "hidden",
-                              border: "1px solid #f0f0ed",
-                              borderRadius: 10,
-                              background:
-                                "linear-gradient(135deg, #f7f7f5 25%, transparent 25%) -8px 0 / 16px 16px, linear-gradient(225deg, #f7f7f5 25%, #fff 25%) -8px 0 / 16px 16px, linear-gradient(315deg, #f7f7f5 25%, #fff 25%) 0 0 / 16px 16px, linear-gradient(45deg, #f7f7f5 25%, #fff 25%) 0 0 / 16px 16px",
-                            }}
-                          >
-                            <span style={{ fontSize: 28, color: "#c7c7c0" }}>▧</span>
+                        <article key={board.id} className={`zp-board-card${boardId === board.id ? " zp-board-card--active" : ""}`}>
+                          <div className="zp-board-thumbnail" aria-hidden="true">
+                            <svg viewBox="0 0 80 56" fill="none" width="80" height="56" aria-hidden="true">
+                              <rect width="80" height="56" rx="4" fill="#f7f7f5"/>
+                              <rect x="8" y="10" width="30" height="3" rx="1.5" fill="#d0d0cc"/>
+                              <rect x="8" y="17" width="46" height="2" rx="1" fill="#e5e5e2"/>
+                              <rect x="8" y="22" width="38" height="2" rx="1" fill="#e5e5e2"/>
+                              <rect x="8" y="32" width="20" height="14" rx="3" fill="#eef1ff" stroke="#4169ff" strokeWidth="1"/>
+                              <rect x="32" y="32" width="20" height="14" rx="3" fill="#eef1ff" stroke="#4169ff" strokeWidth="1"/>
+                            </svg>
                           </div>
-                          <div style={{ minWidth: 0 }}>
-                            <h2
-                              title={board.title}
-                              style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                margin: 0,
-                                fontSize: 15,
-                                fontWeight: 700,
-                                letterSpacing: "-.02em",
-                              }}
-                            >
-                              {board.title}
-                            </h2>
-                            <p style={{ ...styles.muted, margin: "7px 0 0" }}>
-                              Updated {formatDate(board.updated_at)}
-                            </p>
-                            <p style={{ ...styles.muted, margin: "4px 0 0" }}>
-                              {board.elements?.length ?? 0} drawing elements
-                            </p>
+                          <div className="zp-board-info">
+                            <h2 className="zp-board-title" title={board.title}>{board.title}</h2>
+                            <p className="zp-board-meta">Updated {formatDate(board.updated_at)}</p>
                           </div>
-                          <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
+                          <div className="zp-board-actions">
                             <button
                               type="button"
-                              style={{ ...styles.primary, flex: 1 }}
+                              className="zp-btn-primary zp-btn-sm"
+                              style={{ flex: 1 }}
                               onClick={() => handleOpenBoard(board.id)}
                               disabled={busy || !api}
                             >
-                              Open board ↗
+                              Open ↗
                             </button>
                             <button
                               type="button"
-                              style={{ ...styles.secondary, padding: "10px 12px" }}
+                              className="zp-btn-secondary zp-btn-sm zp-btn-icon"
                               onClick={() => handleRenameBoard(board)}
                               disabled={busy}
-                              aria-label={`Rename ${board.title}`}
-                              title="Rename board"
+                              aria-label={`Rename "${board.title}"`}
+                              title="Rename"
                             >
-                              ✎
+                              <svg viewBox="0 0 16 16" fill="none" width="13" height="13" aria-hidden="true">
+                                <path d="M2 12.5L4.5 10l7-7 2 2-7 7-2.5 2.5H2v-2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                              </svg>
                             </button>
                             <button
                               type="button"
-                              style={{ ...styles.secondary, padding: "10px 12px", color: "#a33" }}
+                              className="zp-btn-danger-ghost zp-btn-sm zp-btn-icon"
                               onClick={() => handleDeleteBoard(board)}
                               disabled={busy}
-                              aria-label={`Delete ${board.title}`}
-                              title="Delete board"
+                              aria-label={`Delete "${board.title}"`}
+                              title="Delete"
                             >
-                              ×
+                              <svg viewBox="0 0 16 16" fill="none" width="13" height="13" aria-hidden="true">
+                                <path d="M3 5h10M6 5V3h4v2M6 7.5v5M10 7.5v5M4 5l1 8h6l1-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
                             </button>
                           </div>
                         </article>
@@ -735,38 +635,15 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
               )}
 
               {message && (
-                <p
-                  role="status"
-                  style={{
-                    margin: "22px 0 0",
-                    padding: "11px 13px",
-                    border: "1px solid #e6e6e2",
-                    borderRadius: 10,
-                    background: "#fff",
-                    color: "#4e4e48",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    overflowWrap: "anywhere",
-                  }}
-                >
-                  {message}
-                </p>
+                <div role="status" className={`zp-message zp-message--${message.type}`}>
+                  {message.text}
+                </div>
               )}
             </div>
-            <footer
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-                gap: 8,
-                padding: "12px 22px",
-                borderTop: "1px solid #e9e9e7",
-                color: "#999991",
-                background: "#fff",
-                fontSize: 11,
-              }}
-            >
-              <span>Zippy Cloud · Your work, in one place.</span>
+
+            {/* Panel footer */}
+            <footer className="zp-panel-footer">
+              <span>Zippy Cloud · Your work, always there.</span>
               <span>{userEmail ? "Private workspace" : "Create an account to save boards"}</span>
             </footer>
           </section>

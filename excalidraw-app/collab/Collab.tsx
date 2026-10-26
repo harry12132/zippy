@@ -131,6 +131,7 @@ export interface CollabAPI {
   getActiveRoomLink: CollabInstance["getActiveRoomLink"];
   setCollabError: CollabInstance["setErrorDialog"];
   setUserToFollow: CollabInstance["setUserToFollow"];
+  kickUser: (socketId: SocketId) => void;
 }
 
 interface CollabProps {
@@ -251,6 +252,9 @@ class Collab extends PureComponent<CollabProps, CollabState> {
       getActiveRoomLink: this.getActiveRoomLink,
       setCollabError: this.setErrorDialog,
       setUserToFollow: this.setUserToFollow,
+      kickUser: (socketId: SocketId) => {
+        this.portal.socket?.emit("kick-peer", socketId);
+      },
     };
 
     appJotaiStore.set(collabAPIAtom, collabAPI);
@@ -541,15 +545,19 @@ class Collab extends PureComponent<CollabProps, CollabState> {
     this.fallbackInitializationHandler = fallbackInitializationHandler;
 
     try {
+      const { SupabaseSocket } = await import("./SupabaseSocket");
+      const socket = new SupabaseSocket(roomId);
       this.portal.socket = this.portal.open(
-        socketIOClient(import.meta.env.VITE_APP_WS_SERVER_URL, {
-          transports: ["websocket", "polling"],
-        }),
+        socket,
         roomId,
         roomKey,
       );
 
       this.portal.socket.once("connect_error", fallbackInitializationHandler);
+      this.portal.socket.on("kicked", () => {
+        alert("You have been removed from this collaboration board by the host.");
+        this.stopCollaboration(false);
+      });
     } catch (error: any) {
       console.error(error);
       this.setErrorDialog(error.message);

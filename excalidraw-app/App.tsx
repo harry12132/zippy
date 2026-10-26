@@ -126,6 +126,8 @@ import DebugCanvas, {
   loadSavedDebugState,
 } from "./components/DebugCanvas";
 import { useSimulatedCollaborators } from "./debugCollaborators";
+import { JoinRoomDialog } from "./collab/JoinRoomDialog";
+import { CollaboratorRoster } from "./collab/CollaboratorRoster";
 import "./index.scss";
 
 import type { CollabAPI } from "./collab/Collab";
@@ -380,6 +382,9 @@ const ExcalidrawWrapper = () => {
   const [collabAPI] = useAtom(collabAPIAtom);
   const [isCollaborating] = useAtomWithInitialValue(isCollaboratingAtom, () => {
     return isCollaborationLink(window.location.href);
+  });
+  const [showJoinDialog, setShowJoinDialog] = useState<boolean>(() => {
+    return isCollaborationLink(window.location.href) && !importUsernameFromLocalStorage();
   });
   const collabError = useAtomValue(collabErrorIndicatorAtom);
   const userToFollow = useAtomValue(userToFollowAtom);
@@ -688,6 +693,9 @@ const ExcalidrawWrapper = () => {
     appState: AppState,
     files: BinaryFiles,
   ) => {
+    // Notify any active board auto-saver (e.g. Supabase dashboard board)
+    window.dispatchEvent(new CustomEvent("zippy:canvas-change"));
+
     if (collabAPI?.isCollaborating()) {
       collabAPI.syncElements(elements);
     }
@@ -916,6 +924,12 @@ const ExcalidrawWrapper = () => {
           return (
             <div className="excalidraw-ui-top-right">
               {collabError.message && <CollabError collabError={collabError} />}
+              {excalidrawAPI && isCollaborating && (
+                <CollaboratorRoster
+                  collaborators={excalidrawAPI.getAppState().collaborators}
+                  onKick={(socketId) => (collabAPI as any)?.kickUser?.(socketId)}
+                />
+              )}
               <LiveCollaborationTrigger
                 isCollaborating={isCollaborating}
                 onSelect={() =>
@@ -1087,6 +1101,13 @@ const ExcalidrawWrapper = () => {
         )}
       </Excalidraw>
       <SupabaseBoardsPanel api={excalidrawAPI} />
+      <JoinRoomDialog
+        isOpen={showJoinDialog}
+        onJoin={(chosenName) => {
+          setShowJoinDialog(false);
+          collabAPI?.setUsername(chosenName);
+        }}
+      />
     </div>
   );
 };

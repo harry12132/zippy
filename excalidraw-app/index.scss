@@ -1,10 +1,16 @@
+@import "./zippy-design";
 @import "../packages/excalidraw/css/variables.module.scss";
 
+// ── Excalidraw primary color override (Zippy blue) ────────────────────────────
 .excalidraw {
-  --color-primary-contrast-offset: #625ee0; // to offset Chubb illusion
+  --color-primary: var(--zippy-blue);
+  --color-primary-darker: var(--zippy-blue-hover);
+  --color-primary-darkest: var(--zippy-blue-dark);
+  --color-primary-light: var(--zippy-blue-light);
+  --color-primary-contrast-offset: #3558e8;
 
   &.theme--dark {
-    --color-primary-contrast-offset: #726dff; // to offset Chubb illusion
+    --color-primary-contrast-offset: #7d95ff;
   }
 
   .footer-center {
@@ -29,31 +35,29 @@
     }
   }
 
-  .dropdown-menu-container {
-    .dropdown-menu-item {
-      &.active-collab {
-        background-color: #ecfdf5;
-        color: #064e3c;
-      }
-      &.highlighted {
-        color: var(--color-promo);
-        font-weight: 700;
-        .dropdown-menu-item__icon g {
-          stroke-width: 2;
-        }
+  // Active collab state
+  .dropdown-menu-container .dropdown-menu-item {
+    &.active-collab {
+      background-color: #ecfdf5;
+      color: #064e3c;
+    }
+
+    &.highlighted {
+      color: var(--color-promo);
+      font-weight: 700;
+
+      .dropdown-menu-item__icon g {
+        stroke-width: 2;
       }
     }
   }
 
-  &.theme--dark {
-    .dropdown-menu-item {
-      &.active-collab {
-        background-color: #064e3c;
-        color: #ecfdf5;
-      }
-    }
+  &.theme--dark .dropdown-menu-item.active-collab {
+    background-color: #064e3c;
+    color: #ecfdf5;
   }
 
+  // Alert banners (offline warning, quota exceeded)
   .alert {
     pointer-events: none;
     position: absolute;
@@ -86,6 +90,7 @@
   }
 }
 
+// ── Plus banner ───────────────────────────────────────────────────────────────
 .plus-banner {
   --plus-banner-bg: #f0efff;
   --plus-banner-bg-hover: var(--color-primary-light);
@@ -157,33 +162,24 @@
   }
 }
 
-
-/* Zippy product identity */
-.excalidraw {
-  --color-primary-contrast-offset: #4169ff;
-
-  &.theme--dark {
-    --color-primary-contrast-offset: #7d95ff;
-  }
-}
-
+// ── Zippy welcome screen styles ───────────────────────────────────────────────
 .zippy-welcome-mark {
   width: 3.5rem;
   height: 3.5rem;
   margin: 0 auto 1.25rem;
-  color: #4169ff;
-}
+  color: var(--zippy-blue);
 
-.zippy-welcome-mark svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .zippy-welcome-subtitle {
   max-width: 25rem;
   margin: -0.25rem auto 1.5rem;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--zippy-text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
   text-align: center;
