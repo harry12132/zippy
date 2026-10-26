@@ -101,11 +101,28 @@ const lazyChunksPlugin = (
 export default defineConfig(({ mode }) => {
   // To load .env variables
   const envVars = loadEnv(mode, `../`);
+  // Supabase credentials are intentionally stored in excalidraw-app/.env.local,
+  // while the rest of the app uses the repository-root env files.
+  const supabaseEnvVars = loadEnv(mode, __dirname, "VITE_SUPABASE_");
+  const supabaseUrl =
+    supabaseEnvVars.VITE_SUPABASE_URL || envVars.VITE_SUPABASE_URL || "";
+  const supabasePublishableKey =
+    supabaseEnvVars.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    envVars.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    "";
   // mermaid (+ its many deps & per-diagram chunks) is lazy-loaded and large,
   // so we don't precache it. Populated at build time by `lazyChunksPlugin`.
   const mermaidChunkFileNames = new Set<string>();
   // https://vitejs.dev/config/
   return {
+    // Vite envDir points at the repository root. Explicitly expose the two
+    // public Supabase settings loaded from excalidraw-app as well.
+    define: {
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
+        supabasePublishableKey,
+      ),
+    },
     server: {
       port: Number(envVars.VITE_APP_PORT || 3000),
       // open the browser
