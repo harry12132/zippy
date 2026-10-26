@@ -184,3 +184,41 @@
   line-height: 1.6;
   text-align: center;
 }
+
+// ── Mobile layout enhancements ───────────────────────────────────────────────
+.excalidraw--mobile {
+  .App-toolbar-content {
+    padding: 0 4px;
+  }
+
+  .excalidraw-ui-top-right {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    z-index: 100;
+
+    .collab-button {
+      width: 2.25rem !important;
+      height: 2.25rem !important;
+      min-width: 2.25rem !important;
+      padding: 0 !important;
+      border-radius: var(--border-radius-md) !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+  }
+
+  .zp-roster-pill {
+    padding: 3px 8px 3px 5px;
+    .zp-roster-count {
+      font-size: 11px;
+    }
+  }
+}
+

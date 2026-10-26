@@ -23,8 +23,12 @@ export const getSupabaseClient = (): SupabaseClient => {
     return supabaseClient;
   }
 
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const url =
+    import.meta.env.VITE_SUPABASE_URL ||
+    "https://jkroihxsbbzkddafgwje.supabase.co";
+  const publishableKey =
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    "sb_publishable_ei78Ydsg5cB6X7HzCm1SjA_vwgkuZYc";
 
   if (!url || !publishableKey) {
     throw new Error(

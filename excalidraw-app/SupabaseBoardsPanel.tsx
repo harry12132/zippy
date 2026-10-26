@@ -103,6 +103,16 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // Listen for open-dashboard event (from mobile menu or shortcut)
+  useEffect(() => {
+    const handleOpen = () => {
+      setMessage(null);
+      setOpen(true);
+    };
+    window.addEventListener("zippy:open-dashboard", handleOpen);
+    return () => window.removeEventListener("zippy:open-dashboard", handleOpen);
+  }, []);
+
   useEffect(() => {
     if (!userEmail) return;
     refreshBoards().catch((error) => setMessage({ text: friendlyError(error), type: "error" }));

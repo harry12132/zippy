@@ -4,7 +4,7 @@
 .zp-launcher {
   position: fixed;
   top: 12px;
-  left: 12px;
+  left: 64px;
   z-index: 100;
   display: inline-flex;
   align-items: center;
@@ -33,6 +33,18 @@
   &:active {
     background: var(--zippy-bg-secondary);
   }
+
+  @media (max-width: 768px) {
+    top: 8px;
+    left: 56px;
+    padding: 5px 10px 5px 6px;
+    font-size: 12px;
+    max-width: 130px;
+
+    .zp-launcher-label {
+      max-width: 80px;
+    }
+  }
 }
 
 .zp-logo-icon {
@@ -59,7 +71,7 @@
 .zp-save-btn {
   position: fixed;
   top: 12px;
-  left: 185px;
+  left: 236px;
   z-index: 100;
   display: inline-flex;
   align-items: center;
@@ -90,6 +102,10 @@
 
   &--busy {
     color: var(--zippy-text-muted);
+  }
+
+  @media (max-width: 768px) {
+    display: none; // Instant auto-save handles it on mobile
   }
 }
 
