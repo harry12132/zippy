@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { AppState } from "@excalidraw/excalidraw/types";
 import type { ExcalidrawElement } from "@excalidraw/element/types";
@@ -16,7 +16,7 @@ type Props = {
   api: ExcalidrawImperativeAPI | null;
 };
 
-const panelStyle: React.CSSProperties = {
+const panelStyle: CSSProperties = {
   position: "fixed",
   right: 16,
   bottom: 16,
@@ -33,7 +33,7 @@ const panelStyle: React.CSSProperties = {
   fontSize: 13,
 };
 
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
   padding: "9px 10px",
@@ -44,7 +44,7 @@ const inputStyle: React.CSSProperties = {
   font: "inherit",
 };
 
-const buttonStyle: React.CSSProperties = {
+const buttonStyle: CSSProperties = {
   padding: "9px 10px",
   border: "1px solid #d5d5d5",
   borderRadius: 8,
@@ -108,7 +108,7 @@ export const SupabaseBoardsPanel = ({ api }: Props) => {
     refreshBoards().catch((error) => setMessage(friendlyError(error)));
   }, [userEmail, refreshBoards]);
 
-  const handleAuth = async (event: React.FormEvent) => {
+  const handleAuth = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setMessage("");
