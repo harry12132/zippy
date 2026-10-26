@@ -19,6 +19,26 @@ export const AppMainMenu: React.FC<{
 }> = React.memo((props) => {
   return (
     <MainMenu>
+      <MainMenu.Item
+        icon={
+          <svg viewBox="0 0 32 32" fill="none" width="18" height="18">
+            <rect width="32" height="32" rx="7" fill="#4169ff" />
+            <path
+              d="M8 11h16L9 21h15"
+              stroke="white"
+              strokeWidth="2.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        }
+        onSelect={() => {
+          window.dispatchEvent(new CustomEvent("zippy:open-dashboard"));
+        }}
+      >
+        Zippy Boards & Sign In
+      </MainMenu.Item>
+      <MainMenu.Separator />
       <MainMenu.DefaultItems.LoadScene />
       <MainMenu.DefaultItems.SaveToActiveFile />
       <MainMenu.DefaultItems.Export />

@@ -1,0 +1,68 @@
+// Zippy Design System
+:root {
+  // Brand
+  --zippy-blue: #4169ff;
+  --zippy-blue-hover: #3558e8;
+  --zippy-blue-light: #eef1ff;
+  --zippy-blue-dark: #2a3fb5;
+
+  // Neutrals (Linear-inspired)
+  --zippy-bg: #ffffff;
+  --zippy-bg-secondary: #f9f9f8;
+  --zippy-bg-tertiary: #f3f3f1;
+  --zippy-border: #e5e5e2;
+  --zippy-border-strong: #d0d0cc;
+
+  // Text
+  --zippy-text-primary: #171717;
+  --zippy-text-secondary: #6b6b65;
+  --zippy-text-muted: #9b9b93;
+  --zippy-text-placeholder: #b5b5ae;
+
+  // Danger
+  --zippy-danger: #e5484d;
+  --zippy-danger-bg: #fff0f0;
+  --zippy-danger-border: #ffd4d4;
+
+  // Success
+  --zippy-success: #12a150;
+  --zippy-success-bg: #f0fdf4;
+
+  // Typography
+  --zippy-font: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --zippy-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  // Radius
+  --zippy-radius-sm: 8px;
+  --zippy-radius-md: 12px;
+  --zippy-radius-lg: 16px;
+  --zippy-radius-xl: 22px;
+  --zippy-radius-pill: 999px;
+
+  // Shadow
+  --zippy-shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --zippy-shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --zippy-shadow-lg: 0 20px 60px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.04);
+  --zippy-shadow-xl: 0 32px 100px rgba(0,0,0,.22), 0 8px 16px rgba(0,0,0,.06);
+
+  // Animation
+  --zippy-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --zippy-duration-fast: 120ms;
+  --zippy-duration-base: 200ms;
+  --zippy-duration-slow: 350ms;
+}
+
+// Dark mode tokens
+.theme--dark, [data-theme="dark"] {
+  --zippy-bg: #111113;
+  --zippy-bg-secondary: #18181b;
+  --zippy-bg-tertiary: #212125;
+  --zippy-border: #2e2e32;
+  --zippy-border-strong: #3d3d42;
+  --zippy-text-primary: #ededef;
+  --zippy-text-secondary: #9b9b9f;
+  --zippy-text-muted: #5e5e63;
+  --zippy-text-placeholder: #4a4a50;
+  --zippy-shadow-lg: 0 20px 60px rgba(0,0,0,.4), 0 4px 8px rgba(0,0,0,.2);
+  --zippy-shadow-xl: 0 32px 100px rgba(0,0,0,.55), 0 8px 16px rgba(0,0,0,.3);
+}
